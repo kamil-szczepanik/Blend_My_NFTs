@@ -25,8 +25,8 @@ def select_material(materialList, variant, enableRarity):
         material_rarity_percent = materialList[material]
         rarity_List_Of_i.append(float(material_rarity_percent))
 
-    print(f"MATERIAL_LIST_OF_I:{material_List_Of_i}")
-    print(f"RARITY_LIST_OF_I:{rarity_List_Of_i}")
+    # print(f"MATERIAL_LIST_OF_I:{material_List_Of_i}")
+    # print(f"RARITY_LIST_OF_I:{rarity_List_Of_i}")
 
     for b in rarity_List_Of_i:
         if b == 0:
@@ -106,13 +106,17 @@ def apply_materials(hierarchy, singleDNA, materialsFile, enableRarity):
     for a in singleDNADict:
         complete = False
         for b in materialsFile:
+            mat_list = []
             if singleDNADict[a] == b:
-                material_name, materialList, = select_material(materialsFile[b]['Material List'], b, enableRarity)
-                material_order_num = list(materialList.keys()).index(material_name)  # Gets the Order Number of the Material
-                deconstructed_MaterialDNA[a] = str(material_order_num + 1)
+                for mat_dict in materialsFile[b]['Material List']:
+                    material_name, materialList, = select_material(mat_dict, b, enableRarity)
+                    material_order_num = list(materialList.keys()).index(material_name)  # Gets the Order Number of the Material
+                    mat_list.append(str(material_order_num + 1))
+
+                deconstructed_MaterialDNA[a] = "(" + '-'.join(mat_list) + ")"
                 complete = True
         if not complete:
-            deconstructed_MaterialDNA[a] = "0"
+            deconstructed_MaterialDNA[a] = "(0)"
 
     # This section is now incorrect and needs updating:
 
