@@ -10,6 +10,7 @@ import json
 import smtplib
 import datetime
 import platform
+import re
 from .loading_animation import Loader
 from .Constants import bcolors, removeList, remove_file_by_extension
 from .Metadata import createCardanoMetadata, createSolanaMetaData, createErc721MetaData
@@ -164,6 +165,18 @@ def render_and_save_NFTs(input):
         if not input.enableMaterials:
             single_dna = full_single_dna
 
+        def getListMaterialDNADeconstructed(material_dna):
+            """
+            Returns a list of materials, which are also a list ( because now, there can be more than one material for Variant Object).
+            example: 
+            - input material_dna: "(1)-(2)-(1-4)-(3-13)"
+            - output: ['1', '2', '1-4', '3-13']
+            Important: module 're' necessary
+            """
+            result = re.findall(r'\(.*?\)', material_dna)
+            result = [i[1:-1] for i in result]
+            return result
+        
         def match_DNA_to_Variant(single_dna):
             """
             Matches each DNA number separated by "-" to its attribute, then its variant.
@@ -186,29 +199,38 @@ def render_and_save_NFTs(input):
         def match_materialDNA_to_Material(single_dna, material_dna, materialsFile):
             """
             Matches the Material DNA to it's selected Materials unless a 0 is present meaning no material for that variant was selected.
+            Changes made:
+            Now Material DNA can look like this: (11-21)-(31).
             """
             listAttributes = list(hierarchy.keys())
             listDnaDecunstructed = single_dna.split('-')
-            listMaterialDNADeconstructed = material_dna.split('-')
+            listMaterialDNADeconstructed = getListMaterialDNADeconstructed(material_dna)
 
             full_dna_dict = {}
 
             for attribute, variant, material in zip(listAttributes, listDnaDecunstructed, listMaterialDNADeconstructed):
+                materials_list_to_dict = []
 
                 for var in hierarchy[attribute]:
                     if hierarchy[attribute][var]['number'] == variant:
                         variant = var
 
                 if material != '0':  # If material is not empty
-                    for variant_m in materialsFile:
-                        if variant == variant_m:
-                            # Getting Materials name from Materials index in the Materials List
-                            materials_list = list(materialsFile[variant_m]["Material List"].keys())
-
-                            material = materials_list[int(material) - 1]  # Subtract 1 because '0' means empty mat
-                            break
-
-                full_dna_dict[variant] = material
+                    for sub_mat_idx, sub_material in enumerate(material.split('-')):
+                        for variant_m in materialsFile:
+                            if variant == variant_m:
+                                for mat_dict_idx, mat_dict in enumerate(materialsFile[variant_m]["Material List"]):
+                                    if sub_mat_idx == mat_dict_idx:
+                                        # Getting Materials name from Materials index in the Materials List
+                                        materials_list = list(mat_dict.keys())
+                                        material = materials_list[int(sub_material) - 1]  # Subtract 1 because '0' means empty mat
+                                        materials_list_to_dict.append(material)
+                                        # TODO: if sub_material == 0 then int(sub_material) - 1 = -1 => no error, but last element of array
+                                        
+                else:
+                    materials_list_to_dict.append(material)
+                
+                full_dna_dict[variant] = materials_list_to_dict
 
             return full_dna_dict
 
@@ -218,7 +240,7 @@ def render_and_save_NFTs(input):
             materialdnaDictionary = match_materialDNA_to_Material(single_dna, material_dna, materialsFile)
 
             for var_mat in list(materialdnaDictionary.keys()):
-                if materialdnaDictionary[var_mat] != '0':
+                if materialdnaDictionary[var_mat] != ['0']:
                     if not materialsFile[var_mat]['Variant Objects']:
                         """
                         If objects to apply material to not specified, apply to all objects in Variant collection.
@@ -235,9 +257,10 @@ def render_and_save_NFTs(input):
                         """
                         metadataMaterialDict[var_mat] = materialdnaDictionary[var_mat]
 
-                        for obj in materialsFile[var_mat]['Variant Objects']:
-                            selected_object = bpy.data.objects.get(obj)
-                            selected_object.active_material = bpy.data.materials[materialdnaDictionary[var_mat]]
+                        for index, obj_list in enumerate(materialsFile[var_mat]['Variant Objects']):
+                            for  obj in obj_list:
+                                selected_object = bpy.data.objects.get(obj)
+                                selected_object.active_material = bpy.data.materials[materialdnaDictionary[var_mat][index]]
 
         # Turn off render camera and viewport camera for all collections in hierarchy
         for i in hierarchy:
