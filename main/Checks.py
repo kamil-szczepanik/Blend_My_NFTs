@@ -49,7 +49,7 @@ def check_Rarity(hierarchy, DNAListFormatted, save_path):
 
     DNAList = []
     for i in DNAListFormatted:
-        DNAList.append(list(i.keys())[0])
+        DNAList.append(list(i.keys())[0].split(":")[0])
 
 
     numNFTsGenerated = len(DNAList)
