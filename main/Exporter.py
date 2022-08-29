@@ -233,6 +233,21 @@ def render_and_save_NFTs(input):
                 full_dna_dict[variant] = materials_list_to_dict
 
             return full_dna_dict
+        
+        def get_frame_end(single_dna, animation_order_num_dna=2):
+            """
+            Find frame_end for frame range in order to render number of frames corresponding to number of frames of chosen animation
+            """
+            animations = hierarchy["Animations"]
+            animation_num_from_dna = single_dna.split('-')[animation_order_num_dna-1]
+            
+            for animation in animations:
+                if animations[animation]['number'] == animation_num_from_dna:
+                    frame_end = int(animation.split('-')[1].split('_')[0])
+                    break
+
+            return frame_end
+
 
         metadataMaterialDict = {}
 
@@ -375,6 +390,8 @@ def render_and_save_NFTs(input):
                     bpy.context.scene.render.filepath = os.path.join(animationPath, name)
                     bpy.context.scene.render.image_settings.file_format = input.animationFileFormat
                     bpy.ops.render.render(animation=True)
+                    bpy.context.scene.frame_start = 1
+                    bpy.context.scene.frame_end = get_frame_end(single_dna) # set frame end to number corresponding with animation lenght
 
                 elif input.animationFileFormat == 'TIFF':
                     if not os.path.exists(animationPath):
