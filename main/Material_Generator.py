@@ -100,7 +100,6 @@ def apply_materials(hierarchy, singleDNA, materialsFile, enableRarity):
     """
 
     singleDNADict = match_DNA_to_Variant(hierarchy, singleDNA)
-    materialsFile = json.load(open(materialsFile))
     deconstructed_MaterialDNA = {}
 
     for a in singleDNADict:

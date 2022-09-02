@@ -134,6 +134,48 @@ def generateNFT_DNA(collectionSize, enableRarity, enableLogic, logicFile, enable
     # DNA random, Rarity and Logic methods:
     DataDictionary = {}
 
+    def synchronize_materials_to_hierarchy(logic, hierarchy):
+        """
+        Now rairty from logic file is not important, 
+        although there has to be some placeholder in its place e.g. Color_2_X
+        """
+        for rule_num, rule in logic.items():
+            for key, logic_variant_group in rule.items():
+                for logic_variant_index, logic_variant in enumerate(logic_variant_group):
+                    logic_name_and_num = '_'.join(logic_variant.split('_')[:2])
+                    for attribute in hierarchy:
+                        for hierarchy_variant in hierarchy[attribute]:
+                            if logic_name_and_num in hierarchy_variant:
+                                variant_rarity = hierarchy_variant.split('_')[-1]
+                                logic[rule_num][key][logic_variant_index] = f"{logic_name_and_num}_{variant_rarity}"
+        return logic
+    
+    def synchronize_materials_to_hierarchy(materials, hierarchy):
+        """
+        Now rairty from logic file is not important, 
+        although there has to be some placeholder in its place e.g. Color_2_X
+        """
+        new_materials = {}
+        for materials_variant in materials:
+            materials_name_and_num = '_'.join(materials_variant.split('_')[:2])
+            for attribute in hierarchy:
+                for hierarchy_variant in hierarchy[attribute]:
+                    if materials_name_and_num in hierarchy_variant:
+
+                        variant_rarity = hierarchy_variant.split('_')[-1]
+                        print(hierarchy_variant, variant_rarity)
+                        new_materials[f"{materials_name_and_num}_{variant_rarity}"] = materials[materials_variant]
+
+        return new_materials
+    
+    if enableLogic:
+        logicFile = synchronize_materials_to_hierarchy(logicFile, hierarchy)
+    
+    if enableMaterials:
+        materialsFile = json.load(open(materialsFile))
+        materialsFile = synchronize_materials_to_hierarchy(materialsFile, hierarchy)
+
+
     def createDNArandom(hierarchy):
         """Creates a single DNA randomly without Rarity or Logic."""
         dnaStr = ""
