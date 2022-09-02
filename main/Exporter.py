@@ -234,12 +234,13 @@ def render_and_save_NFTs(input):
 
             return full_dna_dict
         
-        def get_frame_end(single_dna, animation_order_num_dna=2):
+        def get_frame_end(single_dna, animation_index_num_in_dna=1):
             """
             Find frame_end for frame range in order to render number of frames corresponding to number of frames of chosen animation
+            Index num in dna starts from 0!
             """
             animations = hierarchy["Animations"]
-            animation_num_from_dna = single_dna.split('-')[animation_order_num_dna-1]
+            animation_num_from_dna = single_dna.split('-')[animation_index_num_in_dna]
             
             for animation in animations:
                 if animations[animation]['number'] == animation_num_from_dna:
@@ -372,13 +373,21 @@ def render_and_save_NFTs(input):
             check_failed_exists(animationPath)
 
             def render_animation():
+                if 'Animations' in hierarchy:
+                    animation_index_num_in_dna = list(hierarchy.keys()).index('Animations')
+                else: 
+                    animation_index_num_in_dna = 1
+                frame_end = get_frame_end(single_dna, animation_index_num_in_dna) # set frame end to number corresponding with animation lenght
+
                 if not os.path.exists(animationFolder):
                     os.makedirs(animationFolder)
 
+                bpy.context.scene.frame_start = 1
+                bpy.context.scene.frame_end = frame_end
                 if input.animationFileFormat == "MP4":
+
                     bpy.context.scene.render.filepath = animationPath
                     bpy.context.scene.render.image_settings.file_format = "FFMPEG"
-
                     bpy.context.scene.render.ffmpeg.format = 'MPEG4'
                     bpy.context.scene.render.ffmpeg.codec = 'H264'
                     bpy.ops.render.render(animation=True)
@@ -387,8 +396,6 @@ def render_and_save_NFTs(input):
                     if not os.path.exists(animationPath):
                         os.makedirs(animationPath)
 
-                    bpy.context.scene.frame_start = 1
-                    bpy.context.scene.frame_end = get_frame_end(single_dna, 1) # set frame end to number corresponding with animation lenght
                     bpy.context.scene.render.filepath = os.path.join(animationPath, name)
                     bpy.context.scene.render.image_settings.file_format = input.animationFileFormat
                     bpy.ops.render.render(animation=True)
