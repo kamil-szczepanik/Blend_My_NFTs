@@ -387,11 +387,12 @@ def render_and_save_NFTs(input):
                     if not os.path.exists(animationPath):
                         os.makedirs(animationPath)
 
+                    bpy.context.scene.frame_start = 1
+                    bpy.context.scene.frame_end = get_frame_end(single_dna, 1) # set frame end to number corresponding with animation lenght
                     bpy.context.scene.render.filepath = os.path.join(animationPath, name)
                     bpy.context.scene.render.image_settings.file_format = input.animationFileFormat
                     bpy.ops.render.render(animation=True)
-                    bpy.context.scene.frame_start = 1
-                    bpy.context.scene.frame_end = get_frame_end(single_dna) # set frame end to number corresponding with animation lenght
+                    
 
                 elif input.animationFileFormat == 'TIFF':
                     if not os.path.exists(animationPath):
