@@ -170,7 +170,7 @@ def get_rule_break_type(hierarchy, deconstructed_DNA, if_dict, result_dict, resu
     violates_rule = False
 
     # If Variants in 'if_dict' found in deconstructed_DNA and Variants in 'result_dict' not found in deconstructed_DNA:
-    if if_bool and not result_bool:
+    if if_bool and not result_bool and result_dict_type == "THEN":
         violates_rule = True
 
     elif if_bool and result_bool and result_dict_type == "NOT":
