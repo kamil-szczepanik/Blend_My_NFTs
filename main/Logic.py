@@ -271,6 +271,7 @@ def logicafyDNAsingle(hierarchy, singleDNA, logicFile, enableRarity, enableMater
                                                                                    result_dict_type)
             if violates_rule:
                 # print(f"======={deconstructed_DNA} VIOLATES RULE======")
+                # print(rule)
 
                 deconstructed_DNA = apply_rules_to_dna(
                     hierarchy, deconstructed_DNA, if_dict, result_dict, result_dict_type, enableRarity

@@ -128,13 +128,14 @@ def generateNFT_DNA(collectionSize, enableRarity, enableLogic, logicFile, enable
     """
    Returns batchDataDictionary containing the number of NFT combinations, hierarchy, and the DNAList.
    """
+    counter = 0
 
     hierarchy = get_hierarchy()
 
     # DNA random, Rarity and Logic methods:
     DataDictionary = {}
 
-    def synchronize_materials_to_hierarchy(logic, hierarchy):
+    def synchronize_logic_to_hierarchy(logic, hierarchy):
         """
         Now rairty from logic file is not important, 
         although there has to be some placeholder in its place e.g. Color_2_X
@@ -150,7 +151,7 @@ def generateNFT_DNA(collectionSize, enableRarity, enableLogic, logicFile, enable
                                 logic[rule_num][key][logic_variant_index] = f"{logic_name_and_num}_{variant_rarity}"
         return logic
     
-    def synchronize_materials_to_hierarchy(materials, hierarchy):
+    def synchronize_materials_to_hierarchy(materials, hierarchy, materialsFilePath):
         """
         Now rairty from logic file is not important, 
         although there has to be some placeholder in its place e.g. Color_2_X
@@ -163,17 +164,22 @@ def generateNFT_DNA(collectionSize, enableRarity, enableLogic, logicFile, enable
                     if materials_name_and_num in hierarchy_variant:
 
                         variant_rarity = hierarchy_variant.split('_')[-1]
-                        print(hierarchy_variant, variant_rarity)
+                        # print(hierarchy_variant, variant_rarity)
                         new_materials[f"{materials_name_and_num}_{variant_rarity}"] = materials[materials_variant]
+
+        ledger = json.dumps(new_materials, indent=1, ensure_ascii=True)
+        with open(materialsFilePath, 'w') as outfile:
+            outfile.write(ledger + '\n')
 
         return new_materials
     
     if enableLogic:
-        logicFile = synchronize_materials_to_hierarchy(logicFile, hierarchy)
+        logicFile = synchronize_logic_to_hierarchy(logicFile, hierarchy)
     
     if enableMaterials:
+        materialsFilePath = materialsFile
         materialsFile = json.load(open(materialsFile))
-        materialsFile = synchronize_materials_to_hierarchy(materialsFile, hierarchy)
+        materialsFile = synchronize_materials_to_hierarchy(materialsFile, hierarchy, materialsFilePath)
 
 
     def createDNArandom(hierarchy):
@@ -225,6 +231,10 @@ def generateNFT_DNA(collectionSize, enableRarity, enableLogic, logicFile, enable
 
         # print("============\n")
 
+        nonlocal counter
+        counter += 1
+        print(counter)
+
         return singleDNA
 
     def create_DNAList():
@@ -251,6 +261,12 @@ def generateNFT_DNA(collectionSize, enableRarity, enableLogic, logicFile, enable
             DNA_Counter += 1
 
         return DNAListFormatted
+    
+    def create_attributes_hierarchy_dict(hierarchy):
+        attributes_hierarchy = {}
+        for index, attribute in enumerate(hierarchy):
+            attributes_hierarchy[index+1] = attribute
+        return attributes_hierarchy
 
     DNAList = create_DNAList()
 
@@ -260,6 +276,7 @@ def generateNFT_DNA(collectionSize, enableRarity, enableLogic, logicFile, enable
 
     # Data stored in batchDataDictionary:
     DataDictionary["numNFTsGenerated"] = len(DNAList)
+    DataDictionary["attributes_hierarchy"] = create_attributes_hierarchy_dict(hierarchy)
     DataDictionary["hierarchy"] = hierarchy
     DataDictionary["DNAList"] = DNAList
 
@@ -377,7 +394,8 @@ def send_To_Record_JSON(collectionSize, nftsPerBatch, save_path, enableRarity, e
                 f"https://github.com/torrinworx/Blend_My_NFTs#blender-file-organization-and-structure\n"
             )
         finally:
-            loading.stop()
+            # loading.stop()
+            pass
 
         try:
             ledger = json.dumps(DataDictionary, indent=1, ensure_ascii=True)
@@ -398,10 +416,10 @@ def send_To_Record_JSON(collectionSize, nftsPerBatch, save_path, enableRarity, e
             )
 
     # Loading Animation:
-    loading = Loader(f'Creating NFT DNA...', '').start()
+    # loading = Loader(f'Creating NFT DNA...', '').start()
     create_nft_data()
     makeBatches(collectionSize, nftsPerBatch, save_path, batch_json_save_path)
-    loading.stop()
+    # loading.stop()
 
     time_end = time.time()
 

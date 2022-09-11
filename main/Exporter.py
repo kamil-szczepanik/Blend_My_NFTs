@@ -274,6 +274,7 @@ def render_and_save_NFTs(input):
                         metadataMaterialDict[var_mat] = materialdnaDictionary[var_mat]
 
                         for index, obj_list in enumerate(materialsFile[var_mat]['Variant Objects']):
+                            # print(obj_list)
                             for  obj in obj_list:
                                 selected_object = bpy.data.objects.get(obj)
                                 selected_object.active_material = bpy.data.materials[materialdnaDictionary[var_mat][index]]
