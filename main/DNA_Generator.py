@@ -203,6 +203,52 @@ def generateNFT_DNA(collectionSize, enableRarity, enableLogic, logicFile, enable
                 outfile.write(ledger + '\n')
 
             return new_materials
+
+    def check_variant_objects_in_material_file(materialFile):
+        wrong_mat_variant_objects = []
+
+        scene_obj_list = list(bpy.data.objects.keys())
+
+        for variant in materialFile:
+            for variant_object_list in materialFile[variant]["Variant Objects"]:
+                for variant_object in variant_object_list:
+                    
+                    variant_object_found = False
+                    for obj in scene_obj_list:
+                        if obj == variant_object:
+                            variant_object_found = True
+                            break
+                    
+                    if variant_object_found == False:
+                        wrong_mat_variant_objects.append(variant_object)
+        
+        if len(wrong_mat_variant_objects) != 0:
+            raise Exception(f"There are incorrectly named variant objects in Material file! Those objects are:{wrong_mat_variant_objects}")
+        else:
+            return True
+
+    def check_materials_in_material_file(materialFile):
+        wrong_materials = []
+        bpy_materials = bpy.data.materials.keys()
+
+        for variant in materialFile:
+            for materials_dict in materialFile[variant]["Material List"]:
+                for material in materials_dict:
+                    
+                    material_found = False
+                    for mat in bpy_materials:
+                        if mat == material:
+                            material_found = True
+                            break
+                    
+                    if material_found == False:
+                        wrong_materials.append(material)
+        
+        if len(wrong_materials) != 0:
+            raise Exception(f"There are incorrectly named materials in Material file! Those objects are:{wrong_materials}")
+        else:
+            return True
+
     
     if enableLogic:
         logicFile = synchronize_logic_to_hierarchy(logicFile, hierarchy)
@@ -211,6 +257,8 @@ def generateNFT_DNA(collectionSize, enableRarity, enableLogic, logicFile, enable
         materialsFilePath = materialsFile
         materialsFile = json.load(open(materialsFilePath))
         materialsFile = synchronize_materials_to_hierarchy(materialsFile, hierarchy)
+        check_variant_objects_in_material_file(materialsFile)
+        check_materials_in_material_file(materialsFile)
 
 
     def createDNArandom(hierarchy):
