@@ -99,6 +99,48 @@ def createSolanaMetaData(name, Order_Num, NFT_DNA, NFT_Variants, Material_Attrib
 
 
 # ERC721 Template
+# def createErc721MetaData(name, Order_Num, NFT_DNA, NFT_Variants, Material_Attributes, custom_Fields, enableCustomFields,
+#                          erc721_description, erc721MetadataPath):
+#     metaDataDictErc721 = {
+#         "name": name,
+#         "description": erc721_description,
+#         "image": "",
+#         "attributes": None,
+#     }
+
+#     attributes = []
+
+#     # Variants and Attributes:
+#     for i in NFT_Variants:
+#         dictionary = {
+#             "trait_type": i,
+#             "value": stripNums(NFT_Variants[i])
+#         }
+
+#         attributes.append(dictionary)
+
+#     # Material Variants and Attributes:
+#     for i in Material_Attributes:
+#         dictionary = {
+#             "trait_type": i,
+#             "value": Material_Attributes[i]
+#         }
+
+#         attributes.append(dictionary)
+
+#     # Custom Fields:
+#     if enableCustomFields:
+#         for i in custom_Fields:
+#             dictionary = {
+#                 "trait_type": i,
+#                 "value": custom_Fields[i]
+#             }
+#             attributes.append(dictionary)
+
+#     metaDataDictErc721["attributes"] = attributes
+
+#     sendMetaDataToJson(metaDataDictErc721, erc721MetadataPath, name)
+
 def createErc721MetaData(name, Order_Num, NFT_DNA, NFT_Variants, Material_Attributes, custom_Fields, enableCustomFields,
                          erc721_description, erc721MetadataPath):
     metaDataDictErc721 = {
@@ -108,34 +150,28 @@ def createErc721MetaData(name, Order_Num, NFT_DNA, NFT_Variants, Material_Attrib
         "attributes": None,
     }
 
+    for attribute in Material_Attributes:
+        Material_Attributes[attribute] = [mat.split('-')[-1] for mat in  Material_Attributes[attribute]] # delete material prefix e.g PiratHat-Blue -> Blue
+
     attributes = []
 
-    # Variants and Attributes:
-    for i in NFT_Variants:
-        dictionary = {
-            "trait_type": i,
-            "value": stripNums(NFT_Variants[i])
-        }
-
-        attributes.append(dictionary)
-
-    # Material Variants and Attributes:
-    for i in Material_Attributes:
-        dictionary = {
-            "trait_type": i,
-            "value": Material_Attributes[i]
-        }
-
-        attributes.append(dictionary)
-
-    # Custom Fields:
-    if enableCustomFields:
-        for i in custom_Fields:
-            dictionary = {
-                "trait_type": i,
-                "value": custom_Fields[i]
-            }
-            attributes.append(dictionary)
+    # Variants and Attributes and Materials:
+    for attribute in NFT_Variants:
+        if NFT_Variants[attribute].split('_')[0][:3] != 'No ': # so that e.g. "No Eyes" will not appear in metadata
+            for variant in Material_Attributes:
+                if NFT_Variants[attribute] == variant:
+                    dictionary = {
+                        "trait_type": attribute,
+                        "value": f"{stripNums(NFT_Variants[attribute])} {' '.join(Material_Attributes[variant])}"
+                    }
+                    attributes.append(dictionary)
+                    break
+            else:
+                dictionary = {
+                    "trait_type": attribute,
+                    "value": stripNums(NFT_Variants[attribute])
+                }
+                attributes.append(dictionary)
 
     metaDataDictErc721["attributes"] = attributes
 
