@@ -297,6 +297,7 @@ def render_and_save_NFTs(input):
 
         dnaDictionary = match_DNA_to_Variant(single_dna)
         name = input.nftName + "_" + str(Order_Num)
+        file_name = str(Order_Num) + '-' + input.nftName
 
         # Change Text Object in Scene to match DNA string:
         # Variables that can be used: full_single_dna, name, Order_Num
@@ -322,9 +323,9 @@ def render_and_save_NFTs(input):
         modelFolder = os.path.join(batchFolder, "Models")
         BMNFT_metaData_Folder = os.path.join(batchFolder, "BMNFT_metadata")
 
-        imagePath = os.path.join(imageFolder, name)
-        animationPath = os.path.join(animationFolder, name)
-        modelPath = os.path.join(modelFolder, name)
+        imagePath = os.path.join(imageFolder, file_name)
+        animationPath = os.path.join(animationFolder, file_name)
+        modelPath = os.path.join(modelFolder, file_name)
 
         cardanoMetadataPath = os.path.join(batchFolder, "Cardano_metadata")
         solanaMetadataPath = os.path.join(batchFolder, "Solana_metadata")
@@ -800,4 +801,4 @@ def check_render_settings(input):
 
     print(f"\n{bcolors.OK}All NFTs have been successfully checked. Render settings are OK{bcolors.RESET}\n")
 
-    
+
