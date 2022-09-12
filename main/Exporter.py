@@ -133,6 +133,7 @@ def render_and_save_NFTs(input):
     Renders the NFT DNA in a Batch#.json, where # is renderBatch in config.py. Turns off the viewport camera and
     the render camera for all items in hierarchy.
     """
+    check_render_settings(input)
 
     time_start_1 = time.time()
 
@@ -627,3 +628,176 @@ def render_and_save_NFTs(input):
         # time.sleep(total_sleep_time)
 
         shutdown(total_sleep_time)
+
+
+def check_render_settings(input):
+    """
+    Check render settings without rendering so that rendering itself won't crash
+    """
+
+
+    # If failed Batch is detected and user is resuming its generation:
+    if input.fail_state:
+        print(f"{bcolors.ERROR}\nResuming Failed Batch {input.failed_batch}\n{bcolors.RESET}")
+        NFTs_in_Batch, hierarchy, BatchDNAList = getBatchData(input.failed_batch, input.batch_json_save_path)
+        for a in range(input.failed_dna):
+            del BatchDNAList[0]
+        x = input.failed_dna + 1
+
+    # If user is generating the normal way:
+    else:
+        print(f"\nChecking render settings of batch number {input.batchToGenerate}\n")
+        NFTs_in_Batch, hierarchy, BatchDNAList = getBatchData(input.batchToGenerate, input.batch_json_save_path)
+
+    if input.enableMaterials:
+        materialsFile = json.load(open(input.materialsFile))
+
+    for a in BatchDNAList:
+        full_single_dna = list(a.keys())[0]
+        Order_Num = a[full_single_dna]['Order_Num']
+
+        # Material handling:
+        if input.enableMaterials:
+            single_dna, material_dna = full_single_dna.split(':')
+
+        if not input.enableMaterials:
+            single_dna = full_single_dna
+
+        def getListMaterialDNADeconstructed(material_dna):
+            """
+            Returns a list of materials, which are also a list ( because now, there can be more than one material for Variant Object).
+            example: 
+            - input material_dna: "(1)-(2)-(1-4)-(3-13)"
+            - output: ['1', '2', '1-4', '3-13']
+            Important: module 're' necessary
+            """
+            result = re.findall(r'\(.*?\)', material_dna)
+            result = [i[1:-1] for i in result]
+            return result
+        
+        def match_DNA_to_Variant(single_dna):
+            """
+            Matches each DNA number separated by "-" to its attribute, then its variant.
+            """
+
+            listAttributes = list(hierarchy.keys())
+            listDnaDecunstructed = single_dna.split('-')
+            dnaDictionary = {}
+
+            for i, j in zip(listAttributes, listDnaDecunstructed):
+                dnaDictionary[i] = j
+
+            for x in dnaDictionary:
+                for k in hierarchy[x]:
+                    kNum = hierarchy[x][k]["number"]
+                    if kNum == dnaDictionary[x]:
+                        dnaDictionary.update({x: k})
+            return dnaDictionary
+
+        def match_materialDNA_to_Material(single_dna, material_dna, materialsFile):
+            """
+            Matches the Material DNA to it's selected Materials unless a 0 is present meaning no material for that variant was selected.
+            Changes made:
+            Now Material DNA can look like this: (11-21)-(31).
+            """
+            listAttributes = list(hierarchy.keys())
+            listDnaDecunstructed = single_dna.split('-')
+            listMaterialDNADeconstructed = getListMaterialDNADeconstructed(material_dna)
+
+            full_dna_dict = {}
+
+            for attribute, variant, material in zip(listAttributes, listDnaDecunstructed, listMaterialDNADeconstructed):
+                materials_list_to_dict = []
+
+                for var in hierarchy[attribute]:
+                    if hierarchy[attribute][var]['number'] == variant:
+                        variant = var
+
+                if material != '0':  # If material is not empty
+                    for sub_mat_idx, sub_material in enumerate(material.split('-')):
+                        for variant_m in materialsFile:
+                            if variant == variant_m:
+                                for mat_dict_idx, mat_dict in enumerate(materialsFile[variant_m]["Material List"]):
+                                    if sub_mat_idx == mat_dict_idx:
+                                        # Getting Materials name from Materials index in the Materials List
+                                        materials_list = list(mat_dict.keys())
+                                        material = materials_list[int(sub_material) - 1]  # Subtract 1 because '0' means empty mat
+                                        materials_list_to_dict.append(material)
+                                        # TODO: if sub_material == 0 then int(sub_material) - 1 = -1 => no error, but last element of array
+                                        
+                else:
+                    materials_list_to_dict.append(material)
+                
+                full_dna_dict[variant] = materials_list_to_dict
+
+            return full_dna_dict
+
+        metadataMaterialDict = {}
+
+        if input.enableMaterials:
+            materialdnaDictionary = match_materialDNA_to_Material(single_dna, material_dna, materialsFile)
+
+            for var_mat in list(materialdnaDictionary.keys()):
+                if materialdnaDictionary[var_mat] != ['0']:
+                    if not materialsFile[var_mat]['Variant Objects']:
+                        """
+                        If objects to apply material to not specified, apply to all objects in Variant collection.
+                        """
+                        metadataMaterialDict[var_mat] = materialdnaDictionary[var_mat]
+
+                        for obj in bpy.data.collections[var_mat].all_objects:
+                            selected_object = bpy.data.objects.get(obj.name)
+                            selected_object.active_material = bpy.data.materials[materialdnaDictionary[var_mat]]
+
+                    if materialsFile[var_mat]['Variant Objects']:
+                        """
+                        If objects to apply material to are specified, apply material only to objects specified withing the Variant collection.
+                        """
+                        metadataMaterialDict[var_mat] = materialdnaDictionary[var_mat]
+
+                        for index, obj_list in enumerate(materialsFile[var_mat]['Variant Objects']):
+                            # print(obj_list)
+                            for  obj in obj_list:
+                                selected_object = bpy.data.objects.get(obj)
+                                selected_object.active_material = bpy.data.materials[materialdnaDictionary[var_mat][index]]
+
+        # Turn off render camera and viewport camera for all collections in hierarchy
+        for i in hierarchy:
+            for j in hierarchy[i]:
+                try:
+                    bpy.data.collections[j].hide_render = True
+                    bpy.data.collections[j].hide_viewport = True
+                except KeyError:
+                    raise TypeError(
+                        f"\n{bcolors.ERROR}Blend_My_NFTs Error:\n"
+                        f"The Collection '{j}' appears to be missing or has been renamed. If you made any changes to "
+                        f"your .blned file scene, ensure you re-create your NFT Data so Blend_My_NFTs can read your scene."
+                        f"For more information see:{bcolors.RESET}"
+                        f"\nhttps://github.com/torrinworx/Blend_My_NFTs#blender-file-organization-and-structure\n"
+                    )
+
+        dnaDictionary = match_DNA_to_Variant(single_dna)
+        # name = input.nftName + "_" + str(Order_Num)
+
+        # Change Text Object in Scene to match DNA string:
+        # Variables that can be used: full_single_dna, name, Order_Num
+        # ob = bpy.data.objects['Text']  # Object name
+        # ob.data.body = str(f"DNA: {full_single_dna}")  # Set text of Text Object ob
+
+        # print(f"\n{bcolors.OK}|--- Generating NFT {x}/{NFTs_in_Batch}: {name} ---|{bcolors.RESET}")
+        # print(f"DNA attribute list:\n{dnaDictionary}\nDNA Code:{single_dna}")
+
+        for c in dnaDictionary:
+            collection = dnaDictionary[c]
+            if collection != '0':
+                bpy.data.collections[collection].hide_render = False
+                bpy.data.collections[collection].hide_viewport = False
+
+    for i in hierarchy:
+        for j in hierarchy[i]:
+            bpy.data.collections[j].hide_render = False
+            bpy.data.collections[j].hide_viewport = False
+
+    print(f"\n{bcolors.OK}All NFTs have been successfully checked. Render settings are OK{bcolors.RESET}\n")
+
+    
