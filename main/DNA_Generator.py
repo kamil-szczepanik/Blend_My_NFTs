@@ -139,47 +139,78 @@ def generateNFT_DNA(collectionSize, enableRarity, enableLogic, logicFile, enable
         """
         Now rairty from logic file is not important, 
         although there has to be some placeholder in its place e.g. Color_2_X
+        It also checks if Variants in Logic file are named correctly
         """
+
+        wrong_variants = []
         for rule_num, rule in logic.items():
             for key, logic_variant_group in rule.items():
                 for logic_variant_index, logic_variant in enumerate(logic_variant_group):
+                    if len(logic_variant.split('_')) != 3:
+                        wrong_variants.append(logic_variant)
+
                     logic_name_and_num = '_'.join(logic_variant.split('_')[:2])
+                    logic_variant_found_in_hierarchy = False
+
                     for attribute in hierarchy:
                         for hierarchy_variant in hierarchy[attribute]:
                             if logic_name_and_num in hierarchy_variant:
                                 variant_rarity = hierarchy_variant.split('_')[-1]
                                 logic[rule_num][key][logic_variant_index] = f"{logic_name_and_num}_{variant_rarity}"
-        return logic
+                                logic_variant_found_in_hierarchy = True
+
+                    if logic_variant_found_in_hierarchy == False:
+                        wrong_variants.append(logic_variant)
+
+        wrong_variants = set(wrong_variants)
+        if len(wrong_variants) != 0:
+            raise Exception(f"There are incorrectly named variant in Logic file! Those variants are:{wrong_variants}")
+        else:
+            return logic
     
-    def synchronize_materials_to_hierarchy(materials, hierarchy, materialsFilePath):
+    def synchronize_materials_to_hierarchy(materials, hierarchy):
         """
         Now rairty from logic file is not important, 
         although there has to be some placeholder in its place e.g. Color_2_X
+        It also checks if Variants in Material file are named correctly
         """
         new_materials = {}
+        wrong_variants = []
+
         for materials_variant in materials:
+            if len(materials_variant.split('_')) != 3:
+                wrong_variants.append(materials_variant)
             materials_name_and_num = '_'.join(materials_variant.split('_')[:2])
+            materials_variant_found_in_hierarchy = False
+
             for attribute in hierarchy:
                 for hierarchy_variant in hierarchy[attribute]:
                     if materials_name_and_num in hierarchy_variant:
 
                         variant_rarity = hierarchy_variant.split('_')[-1]
-                        # print(hierarchy_variant, variant_rarity)
                         new_materials[f"{materials_name_and_num}_{variant_rarity}"] = materials[materials_variant]
+                        materials_variant_found_in_hierarchy = True
 
-        ledger = json.dumps(new_materials, indent=1, ensure_ascii=True)
-        with open(materialsFilePath, 'w') as outfile:
-            outfile.write(ledger + '\n')
+            if materials_variant_found_in_hierarchy == False:
+                wrong_variants.append(materials_variant)
+                
+        wrong_variants = set(wrong_variants)
+        if len(wrong_variants) != 0:
+            raise Exception(f"There are incorrectly named variant in Material file! Those variants are:{wrong_variants}")
+        else:
+            ledger = json.dumps(new_materials, indent=1, ensure_ascii=True)
+            with open(materialsFilePath, 'w') as outfile:
+                outfile.write(ledger + '\n')
 
-        return new_materials
+            return new_materials
     
     if enableLogic:
         logicFile = synchronize_logic_to_hierarchy(logicFile, hierarchy)
     
     if enableMaterials:
         materialsFilePath = materialsFile
-        materialsFile = json.load(open(materialsFile))
-        materialsFile = synchronize_materials_to_hierarchy(materialsFile, hierarchy, materialsFilePath)
+        materialsFile = json.load(open(materialsFilePath))
+        materialsFile = synchronize_materials_to_hierarchy(materialsFile, hierarchy)
 
 
     def createDNArandom(hierarchy):
