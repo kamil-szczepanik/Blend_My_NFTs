@@ -77,3 +77,25 @@ def render_and_save_NFTs(input, reverse_order=False):
                     input.custom_Fields[item.field_name] = item.field_value
 
     Exporter.render_and_save_NFTs(input)
+
+
+def check_render_settings(input, reverse_order=False):
+    if input.enableCustomFields:
+        scn = bpy.context.scene
+        if reverse_order:
+            for i in range(scn.custom_metadata_fields_index, -1, -1):
+                item = scn.custom_metadata_fields[i]
+                if item.field_name in list(input.custom_Fields.keys()):
+                    raise ValueError(
+                        f"A duplicate of '{item.field_name}' was found. Please ensure all Custom Metadata field Names are unique.")
+                else:
+                    input.custom_Fields[item.field_name] = item.field_value
+        else:
+            for item in scn.custom_metadata_fields:
+                if item.field_name in list(input.custom_Fields.keys()):
+                    raise ValueError(
+                        f"A duplicate of '{item.field_name}' was found. Please ensure all Custom Metadata field Names are unique.")
+                else:
+                    input.custom_Fields[item.field_name] = item.field_value
+
+    Exporter.check_render_settings(input)

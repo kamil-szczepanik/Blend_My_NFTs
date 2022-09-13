@@ -348,6 +348,9 @@ def runAsHeadless():
     if args.operation == 'create-dna':
         Intermediate.send_To_Record_JSON(input)
 
+    elif args.operation == 'check-render':
+        Intermediate.check_render_settings(input)
+
     elif args.operation == 'generate-nfts':
         Intermediate.render_and_save_NFTs(input)
 
@@ -507,6 +510,33 @@ class createData(bpy.types.Operator):
         Intermediate.send_To_Record_JSON(input)
 
         self.report({'INFO'}, f"NFT Data created!")
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_confirm(self, event)
+
+class checkRenderSettings(bpy.types.Operator):
+    bl_idname = 'check.render'
+    bl_label = 'Check Render Settings'
+    bl_description = 'Checks if render will work. Basically the "Generate and save NFTs" button but without actually rendering and saving'
+    bl_options = {"REGISTER", "UNDO"}
+
+    reverse_order: BoolProperty(
+        default=False,
+        name="Reverse Order")
+
+    def execute(self, context):
+        # Handling Custom Fields UIList input:
+        input = getBMNFTData()
+
+        if input.enableLogic:
+            if input.enable_Logic_Json and not input.logicFile:
+                self.report({'ERROR'},
+                            f"No Logic.json file path set. Please set the file path to your Logic.json file.")
+
+        Intermediate.check_render_settings(input)
+
+        self.report({'INFO'}, f"NFT Data checked")
         return {"FINISHED"}
 
     def invoke(self, context, event):
@@ -883,6 +913,10 @@ class BMNFTS_PT_GenerateNFTs(bpy.types.Panel):
         row = layout.row()
         row.prop(input_tool_scene, "batchToGenerate")
 
+        # Check render settings
+        row = layout.row()
+        self.layout.operator("check.render", icon='RENDER_RESULT', text="Check Render Settings")
+
         save_path = bpy.path.abspath(bpy.context.scene.input_tool.save_path)
         Blend_My_NFTs_Output = os.path.join(save_path, "Blend_My_NFTs Output", "NFT_Data")
         batch_json_save_path = os.path.join(Blend_My_NFTs_Output, "Batch_Data")
@@ -901,6 +935,8 @@ class BMNFTS_PT_GenerateNFTs(bpy.types.Panel):
         if not fail_state:
             row = layout.row()
             self.layout.operator("exporter.nfts", icon='RENDER_RESULT', text="Generate NFTs & Create Metadata")
+
+
 
 
 class BMNFTS_PT_Refactor(bpy.types.Panel):
@@ -1027,6 +1063,7 @@ classes = (
 
               # Operator Classes:
               createData,
+              checkRenderSettings,
               exportNFTs,
               resume_failed_batch,
               refactor_Batches,
