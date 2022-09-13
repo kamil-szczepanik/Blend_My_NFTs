@@ -399,7 +399,7 @@ def render_and_save_NFTs(input):
                     if not os.path.exists(animationPath):
                         os.makedirs(animationPath)
 
-                    bpy.context.scene.render.filepath = os.path.join(animationPath, name)
+                    bpy.context.scene.render.filepath = os.path.join(animationPath, file_name)
                     bpy.context.scene.render.image_settings.file_format = input.animationFileFormat
                     bpy.ops.render.render(animation=True)
                     
@@ -408,7 +408,7 @@ def render_and_save_NFTs(input):
                     if not os.path.exists(animationPath):
                         os.makedirs(animationPath)
 
-                    bpy.context.scene.render.filepath = os.path.join(animationPath, name)
+                    bpy.context.scene.render.filepath = os.path.join(animationPath, file_name)
                     bpy.context.scene.render.image_settings.file_format = input.animationFileFormat
                     bpy.ops.render.render(animation=True)
 
