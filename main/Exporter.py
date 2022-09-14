@@ -133,7 +133,7 @@ def render_and_save_NFTs(input):
     Renders the NFT DNA in a Batch#.json, where # is renderBatch in config.py. Turns off the viewport camera and
     the render camera for all items in hierarchy.
     """
-    check_render_settings(input)
+    # check_render_settings(input)
 
     time_start_1 = time.time()
 
