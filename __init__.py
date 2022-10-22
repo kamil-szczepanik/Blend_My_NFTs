@@ -154,6 +154,7 @@ class BMNFTData:
     logicFile: str
 
     enableRarity: bool
+    rarityFile: str
 
     enableAutoShutdown: bool
 
@@ -188,6 +189,7 @@ def getBMNFTData():
         collectionSize=bpy.context.scene.input_tool.collectionSize,
 
         enableRarity=bpy.context.scene.input_tool.enableRarity,
+        rarityFile=bpy.path.abspath(bpy.context.scene.input_tool.rarityFile),
 
         Blend_My_NFTs_Output=_Blend_My_NFTs_Output,
         batch_json_save_path=_batch_json_save_path,
@@ -274,6 +276,7 @@ def runAsHeadless():
             f"nftsPerBatch={str(settings.nftsPerBatch)}\n"
             f"save_path={settings.save_path}\n"
             f"enableRarity={(settings.enableRarity)}\n"
+            f"rarityFile={settings.rarityFile}\n"
             f"enableLogic={str(settings.enableLogic)}\n"
             f"imageBool={str(settings.imageBool)}\n"
             f"imageEnum={settings.imageEnum}\n"
@@ -333,6 +336,7 @@ def runAsHeadless():
         settings.customfieldsFile = pairs[22][1]
         settings.enableMaterials = pairs[23][1] == 'True'
         settings.materialsFile = pairs[24][1]
+        settings.rarityFile = pairs[25][1]
 
     if args.save_path:
         settings.save_path = args.save_path
@@ -391,6 +395,14 @@ class BMNFTS_PGT_Input_Properties(bpy.types.PropertyGroup):
     materialsFile: bpy.props.StringProperty(
         name="Materials File",
         description="Path where Materials.json is located.",
+        default="",
+        maxlen=1024,
+        subtype="FILE_PATH"
+    )
+
+    rarityFile: bpy.props.StringProperty(
+        name="Rarity File",
+        description="Path where RarityFile.json is located.",
         default="",
         maxlen=1024,
         subtype="FILE_PATH"
@@ -621,6 +633,7 @@ class resume_failed_batch(bpy.types.Operator):
             logicFile=render_settings["logicFile"],
 
             enableRarity=render_settings["enableRarity"],
+            rarityFile=render_settings["rarityFile"],
 
             enableAutoShutdown=render_settings["enableAutoShutdown"],
 
@@ -732,6 +745,7 @@ class export_settings(bpy.types.Operator):
                 "#Enable Materials\n"
                 f"enableMaterials={str(settings.enableMaterials)}\n"
                 f"materialsFile={settings.materialsFile}\n"
+                f"rarityFile={settings.rarityFile}\n"
             )
 
             print(output, file=config)
@@ -772,6 +786,10 @@ class BMNFTS_PT_CreateData(bpy.types.Panel):
 
         row = layout.row()
         row.prop(input_tool_scene, "enableRarity")
+
+        if bpy.context.scene.input_tool.enableRarity:
+            row = layout.row()
+            row.prop(input_tool_scene, "rarityFile")
 
         row = layout.row()
         row.prop(input_tool_scene, "enableLogic")

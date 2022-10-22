@@ -1,6 +1,7 @@
 # Purpose:
 # This file generates NFT DNA based on a .blend file scene structure and exports NFTRecord.json.
 
+from traceback import print_tb
 import bpy
 import os
 import re
@@ -124,7 +125,7 @@ def get_hierarchy():
     return hierarchy
 
 
-def generateNFT_DNA(collectionSize, enableRarity, enableLogic, logicFile, enableMaterials, materialsFile):
+def generateNFT_DNA(collectionSize, enableRarity, rarityFile, enableLogic, logicFile, enableMaterials, materialsFile):
     """
    Returns batchDataDictionary containing the number of NFT combinations, hierarchy, and the DNAList.
    """
@@ -249,6 +250,27 @@ def generateNFT_DNA(collectionSize, enableRarity, enableLogic, logicFile, enable
         else:
             return True
 
+    def check_RarityFile(hierarchy, rarity):
+        for attribute in hierarchy:
+            for variant in hierarchy[attribute]:
+                variant_found_flag = False
+                
+                for att_rarity in rarity:
+                    for var_rarity in rarity[att_rarity]:
+                        if var_rarity==variant:
+                            variant_found_flag=True
+                if variant_found_flag==False:
+                    raise Exception(f"Variant from hierarchy in blender not found in RarityFile.json. Variant name: {variant}")
+
+        return True
+
+    def update_hierarchy_with_values_from_RarityFile(hierarchy, rarity):
+        for attribute in hierarchy:
+            for variant in hierarchy[attribute]:
+                hierarchy[attribute][variant]["rarity"] = rarity[attribute][variant]
+
+        return hierarchy
+
     
     if enableLogic:
         logicFile = synchronize_logic_to_hierarchy(logicFile, hierarchy)
@@ -259,6 +281,11 @@ def generateNFT_DNA(collectionSize, enableRarity, enableLogic, logicFile, enable
         materialsFile = synchronize_materials_to_hierarchy(materialsFile, hierarchy)
         check_variant_objects_in_material_file(materialsFile)
         check_materials_in_material_file(materialsFile)
+
+    if enableRarity:
+        rarity = json.load(open(rarityFile))
+        check_RarityFile(hierarchy, rarity)
+        hierarchy = update_hierarchy_with_values_from_RarityFile(hierarchy, rarity)
 
 
     def createDNArandom(hierarchy):
@@ -418,7 +445,7 @@ def makeBatches(collectionSize, nftsPerBatch, save_path, batch_json_save_path):
             outfile.write(batchDictionary)
 
 
-def send_To_Record_JSON(collectionSize, nftsPerBatch, save_path, enableRarity, enableLogic, logicFile, enableMaterials,
+def send_To_Record_JSON(collectionSize, nftsPerBatch, save_path, enableRarity, rarityFile, enableLogic, logicFile, enableMaterials,
                         materialsFile, Blend_My_NFTs_Output, batch_json_save_path):
     """
    Creates NFTRecord.json file and sends "batchDataDictionary" to it. NFTRecord.json is a permanent record of all DNA
@@ -450,7 +477,7 @@ def send_To_Record_JSON(collectionSize, nftsPerBatch, save_path, enableRarity, e
 
     def create_nft_data():
         try:
-            DataDictionary = generateNFT_DNA(collectionSize, enableRarity, enableLogic, logicFile, enableMaterials,
+            DataDictionary = generateNFT_DNA(collectionSize, enableRarity, rarityFile, enableLogic, logicFile, enableMaterials,
                                              materialsFile)
             NFTRecord_save_path = os.path.join(Blend_My_NFTs_Output, "NFTRecord.json")
 

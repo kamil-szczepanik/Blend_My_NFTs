@@ -48,6 +48,7 @@ def send_To_Record_JSON(input, reverse_order=False):
                                       input.nftsPerBatch,
                                       input.save_path,
                                       input.enableRarity,
+                                      input.rarityFile,
                                       input.enableLogic,
                                       input.logicFile,
                                       input.enableMaterials,
