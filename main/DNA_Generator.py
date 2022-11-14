@@ -131,6 +131,9 @@ def generateNFT_DNA(collectionSize, enableRarity, rarityFile, enableLogic, logic
    """
     counter = 0
 
+    jack_o_lantern_num = 1*collectionSize/100
+    jack_o_lantern_counter = 0
+
     hierarchy = get_hierarchy()
 
     # DNA random, Rarity and Logic methods:
@@ -271,6 +274,17 @@ def generateNFT_DNA(collectionSize, enableRarity, rarityFile, enableLogic, logic
 
         return hierarchy
 
+    def check_if_variant_in_DNA(singleDNA, dna_order_num, variant_num):
+        """
+        dna_order_num and variant_num counting from 1
+        """
+        deconstructed_DNA = singleDNA.split("-")
+        hat_variant = deconstructed_DNA[dna_order_num-1]
+        if hat_variant==str(variant_num):
+            return True
+        else:
+            return False
+
     
     if enableLogic:
         logicFile = synchronize_logic_to_hierarchy(logicFile, hierarchy)
@@ -329,6 +343,16 @@ def generateNFT_DNA(collectionSize, enableRarity, rarityFile, enableLogic, logic
 
         if enableLogic:
             singleDNA = Logic.logicafyDNAsingle(hierarchy, singleDNA, logicFile, enableRarity, enableMaterials)
+
+            nonlocal jack_o_lantern_counter
+            nonlocal jack_o_lantern_num
+            while check_if_variant_in_DNA(singleDNA, 16, 23) and jack_o_lantern_counter >= jack_o_lantern_num:
+                singleDNA = Rarity.createDNArarity(hierarchy)
+                singleDNA = Logic.logicafyDNAsingle(hierarchy, singleDNA, logicFile, enableRarity, enableMaterials)
+            if check_if_variant_in_DNA(singleDNA, 16, 23) and jack_o_lantern_counter < jack_o_lantern_num:
+                jack_o_lantern_counter+=1
+
+
         # print(f"Logic DNA: {singleDNA}")
 
         if enableMaterials:
