@@ -503,6 +503,7 @@ def send_To_Record_JSON(collectionSize, nftsPerBatch, save_path, enableRarity, r
         try:
             DataDictionary = generateNFT_DNA(collectionSize, enableRarity, rarityFile, enableLogic, logicFile, enableMaterials,
                                              materialsFile)
+            DataDictionary["Number of batches"] = collectionSize // nftsPerBatch
             NFTRecord_save_path = os.path.join(Blend_My_NFTs_Output, "NFTRecord.json")
 
             # Checks:

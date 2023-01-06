@@ -121,6 +121,9 @@ class BMNFTData:
     save_path: str
     nftsPerBatch: int
     batchToGenerate: int
+    batchesToGenerate: str
+    multipleBatches: bool
+    allBatchesToGenerate: bool
     collectionSize: int
 
     Blend_My_NFTs_Output: str
@@ -186,6 +189,9 @@ def getBMNFTData():
         save_path=_save_path,
         nftsPerBatch=bpy.context.scene.input_tool.nftsPerBatch,
         batchToGenerate=bpy.context.scene.input_tool.batchToGenerate,
+        batchesToGenerate=bpy.context.scene.input_tool.batchesToGenerate,
+        multipleBatches=bpy.context.scene.input_tool.multipleBatches,
+        allBatchesToGenerate=bpy.context.scene.input_tool.allBatchesToGenerate,
         collectionSize=bpy.context.scene.input_tool.collectionSize,
 
         enableRarity=bpy.context.scene.input_tool.enableRarity,
@@ -285,6 +291,9 @@ def runAsHeadless():
             f"modelBool={str(settings.modelBool)}\n"
             f"modelEnum={settings.modelEnum}\n"
             f"batchToGenerate={str(settings.batchToGenerate)}\n"
+            f"batchesToGenerate={settings.batchesToGenerate}\n"
+            f"multipleBatches={(settings.multipleBatches)}\n"
+            f"allBatchesToGenerate={(settings.allBatchesToGenerate)}\n"
             f"cardanoMetaDataBool={str(settings.cardanoMetaDataBool)}\n"
             f"cardano_description={settings.cardano_description}\n"
             f"erc721MetaData={str(settings.erc721MetaData)}\n"
@@ -337,6 +346,9 @@ def runAsHeadless():
         settings.enableMaterials = pairs[23][1] == 'True'
         settings.materialsFile = pairs[24][1]
         settings.rarityFile = pairs[25][1]
+        settings.multipleBatches = pairs[26][1] == 'True'
+        settings.batchesToGenerate = pairs[27][1]
+        settings.allBatchesToGenerate = pairs[28][1] == 'True'
 
     if args.save_path:
         settings.save_path = args.save_path
@@ -451,8 +463,14 @@ class BMNFTS_PGT_Input_Properties(bpy.types.PropertyGroup):
         ]
     )
 
+    multipleBatches: bpy.props.BoolProperty(name="Generate multiple batches")
+
+    allBatchesToGenerate: bpy.props.BoolProperty(name="Generate all batches")
+
     batchToGenerate: bpy.props.IntProperty(name="Batch To Generate", default=1,
                                            min=1)
+
+    batchesToGenerate: bpy.props.StringProperty(name="Batches To Generate")
 
     # Refactor Batches & Create Metadata Panel:
     cardanoMetaDataBool: bpy.props.BoolProperty(name="Cardano Cip")
@@ -600,6 +618,9 @@ class resume_failed_batch(bpy.types.Operator):
             save_path=_save_path,
             nftsPerBatch=render_settings["nftsPerBatch"],
             batchToGenerate=render_settings["batchToGenerate"],
+            multipleBatches=render_settings["multipleBatches"],
+            allBatchesToGenerate=render_settings["allBatchesToGenerate"],
+            batchesToGenerate=render_settings["batchesToGenerate"],
             collectionSize=render_settings["collectionSize"],
 
             Blend_My_NFTs_Output=_Blend_My_NFTs_Output,
@@ -729,6 +750,9 @@ class export_settings(bpy.types.Operator):
                 "\n"
                 "#Batch to generate\n"
                 f"batchToGenerate={str(settings.batchToGenerate)}\n"
+                f"multipleBatches={(settings.multipleBatches)}\n"
+                f"allBatchesToGenerate={(settings.allBatchesToGenerate)}\n"
+                f"batchesToGenerate={settings.batchesToGenerate}\n"
                 "\n"
                 "#Metadata Format\n"
                 f"cardanoMetaDataBool={str(settings.cardanoMetaDataBool)}\n"
@@ -928,8 +952,19 @@ class BMNFTS_PT_GenerateNFTs(bpy.types.Panel):
             row = col.row(align=True)
             row.operator("custom_metadata_fields_uilist.clear_list", icon="X")
 
+        
         row = layout.row()
-        row.prop(input_tool_scene, "batchToGenerate")
+        row.prop(input_tool_scene, "multipleBatches")
+
+        if bpy.context.scene.input_tool.multipleBatches:
+            row = layout.row()
+            row.prop(input_tool_scene, "allBatchesToGenerate")
+            if not bpy.context.scene.input_tool.allBatchesToGenerate:
+                row = layout.row()
+                row.prop(input_tool_scene, "batchesToGenerate")
+        else:
+            row = layout.row()
+            row.prop(input_tool_scene, "batchToGenerate")
 
         # Check render settings
         row = layout.row()

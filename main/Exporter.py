@@ -127,8 +127,31 @@ def getBatchData(batchToGenerate, batch_json_save_path):
 
     return NFTs_in_Batch, hierarchy, BatchDNAList
 
+def getNumOfBatches(Blend_My_NFTs_Output):
+    NFTRecord_save_path = os.path.join(Blend_My_NFTs_Output, "NFTRecord.json")
+    nft_record = json.load(open(NFTRecord_save_path))
+    NumOfBatches = nft_record["Number of batches"]
+    return NumOfBatches
+
+def get_batch_list_from_string(batches_string):
+    return [int(batch_num) for batch_num in batches_string.strip().split(',')]
 
 def render_and_save_NFTs(input):
+    if input.multipleBatches:
+        if input.allBatchesToGenerate:
+            numOfBatches = getNumOfBatches(input.Blend_My_NFTs_Output)
+            for batch_num in range(1, numOfBatches+1):
+                input.batchToGenerate = batch_num
+                render_and_save_batch_NFTs(input)
+        else:
+            for batch_num in get_batch_list_from_string(input.batchesToGenerate):
+                input.batchToGenerate = batch_num
+                render_and_save_batch_NFTs(input)
+    else:
+        render_and_save_batch_NFTs(input)
+
+
+def render_and_save_batch_NFTs(input):
     """
     Renders the NFT DNA in a Batch#.json, where # is renderBatch in config.py. Turns off the viewport camera and
     the render camera for all items in hierarchy.
@@ -630,8 +653,21 @@ def render_and_save_NFTs(input):
 
         shutdown(total_sleep_time)
 
-
 def check_render_settings(input):
+    if input.multipleBatches:
+        if input.allBatchesToGenerate:
+            numOfBatches = getNumOfBatches(input.Blend_My_NFTs_Output)
+            for batch_num in range(1, numOfBatches+1):
+                input.batchToGenerate = batch_num
+                check_batch_render_settings(input)
+        else:
+            for batch_num in get_batch_list_from_string(input.batchesToGenerate):
+                input.batchToGenerate = batch_num
+                check_batch_render_settings(input)
+    else:
+        check_batch_render_settings(input)
+
+def check_batch_render_settings(input):
     """
     Check render settings without rendering so that rendering itself won't crash
     """
