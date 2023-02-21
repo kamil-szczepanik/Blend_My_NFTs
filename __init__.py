@@ -126,6 +126,9 @@ class BMNFTData:
     allBatchesToGenerate: bool
     collectionSize: int
 
+    # adds +1 frame to render
+    renderProfilePic: bool
+
     Blend_My_NFTs_Output: str
     batch_json_save_path: str
     nftBatch_save_path: str
@@ -193,6 +196,8 @@ def getBMNFTData():
         multipleBatches=bpy.context.scene.input_tool.multipleBatches,
         allBatchesToGenerate=bpy.context.scene.input_tool.allBatchesToGenerate,
         collectionSize=bpy.context.scene.input_tool.collectionSize,
+
+        renderProfilePic=bpy.context.scene.input_tool.renderProfilePic,
 
         enableRarity=bpy.context.scene.input_tool.enableRarity,
         rarityFile=bpy.path.abspath(bpy.context.scene.input_tool.rarityFile),
@@ -294,6 +299,7 @@ def runAsHeadless():
             f"batchesToGenerate={settings.batchesToGenerate}\n"
             f"multipleBatches={(settings.multipleBatches)}\n"
             f"allBatchesToGenerate={(settings.allBatchesToGenerate)}\n"
+            f"renderProfilePic={(settings.renderProfilePic)}\n"
             f"cardanoMetaDataBool={str(settings.cardanoMetaDataBool)}\n"
             f"cardano_description={settings.cardano_description}\n"
             f"erc721MetaData={str(settings.erc721MetaData)}\n"
@@ -349,6 +355,7 @@ def runAsHeadless():
         settings.multipleBatches = pairs[26][1] == 'True'
         settings.batchesToGenerate = pairs[27][1]
         settings.allBatchesToGenerate = pairs[28][1] == 'True'
+        settings.renderProfilePic = pairs[29][1]
 
     if args.save_path:
         settings.save_path = args.save_path
@@ -466,6 +473,8 @@ class BMNFTS_PGT_Input_Properties(bpy.types.PropertyGroup):
     multipleBatches: bpy.props.BoolProperty(name="Generate multiple batches")
 
     allBatchesToGenerate: bpy.props.BoolProperty(name="Generate all batches")
+
+    renderProfilePic: bpy.props.BoolProperty(name="Render Profile Picture (+1 frame to render)")
 
     batchToGenerate: bpy.props.IntProperty(name="Batch To Generate", default=1,
                                            min=1)
@@ -623,6 +632,8 @@ class resume_failed_batch(bpy.types.Operator):
             batchesToGenerate=render_settings["batchesToGenerate"],
             collectionSize=render_settings["collectionSize"],
 
+            renderProfilePic=render_settings["renderProfilePic"],
+
             Blend_My_NFTs_Output=_Blend_My_NFTs_Output,
             batch_json_save_path=_batch_json_save_path,
             nftBatch_save_path=render_settings["nftBatch_save_path"],
@@ -753,6 +764,9 @@ class export_settings(bpy.types.Operator):
                 f"multipleBatches={(settings.multipleBatches)}\n"
                 f"allBatchesToGenerate={(settings.allBatchesToGenerate)}\n"
                 f"batchesToGenerate={settings.batchesToGenerate}\n"
+                "\n"
+                "#Other settings\n"
+                f"renderProfilePic={(settings.renderProfilePic)}\n"
                 "\n"
                 "#Metadata Format\n"
                 f"cardanoMetaDataBool={str(settings.cardanoMetaDataBool)}\n"
@@ -965,6 +979,13 @@ class BMNFTS_PT_GenerateNFTs(bpy.types.Panel):
         else:
             row = layout.row()
             row.prop(input_tool_scene, "batchToGenerate")
+
+        # Other settings:
+        # Render profile picture (+1 frame to render)
+        row = layout.row()
+        layout.label(text="Other render settings:")
+        row = layout.row()
+        row.prop(input_tool_scene, "renderProfilePic")
 
         # Check render settings
         row = layout.row()

@@ -4,6 +4,7 @@
 
 import bpy
 import os
+import shutil
 import ssl
 import time
 import json
@@ -98,6 +99,20 @@ def save_generation_state(input):
     })
 
     save_batch(batch, file_name)
+
+def move_profile_pic(animations_folder_hunk_path, profile_pic_folder_path, file_name):
+    """Moves profile picture to the right folder"""
+    if not os.path.exists(animations_folder_hunk_path):
+        print(animations_folder_hunk_path, 'doesnt exist!')
+        return
+
+    if not os.path.exists(profile_pic_folder_path):
+        os.mkdir(profile_pic_folder_path)
+
+    filename = sorted(os.listdir(animations_folder_hunk_path))[-1]
+    if filename == "desktop.ini":
+        filename = sorted(os.listdir(animations_folder_hunk_path))[-2]
+    shutil.move(os.path.join(animations_folder_hunk_path, filename), os.path.join(profile_pic_folder_path, file_name+"-ProfilePicture.png"))
 
 
 def save_completed(full_single_dna, a, x, batch_json_save_path, batchToGenerate):
@@ -343,6 +358,8 @@ def render_and_save_batch_NFTs(input):
 
         imageFolder = os.path.join(batchFolder, "Images")
         animationFolder = os.path.join(batchFolder, "Animations")
+        if input.renderProfilePic:
+            profilePicFolder = os.path.join(batchFolder, "Profile_Pictures")
         modelFolder = os.path.join(batchFolder, "Models")
         BMNFT_metaData_Folder = os.path.join(batchFolder, "BMNFT_metadata")
 
@@ -404,6 +421,9 @@ def render_and_save_batch_NFTs(input):
                 else: 
                     animation_index_num_in_dna = 1
                 frame_end = get_frame_end(single_dna, animation_index_num_in_dna) # set frame end to number corresponding with animation lenght
+
+                if input.renderProfilePic: # renderProfilePic adds additional frame for profile pic frame
+                    frame_end += 1
 
                 if not os.path.exists(animationFolder):
                     os.makedirs(animationFolder)
@@ -574,6 +594,12 @@ def render_and_save_batch_NFTs(input):
         print(f"Completed {name} render in {time.time() - time_start_2}s")
 
         save_completed(full_single_dna, a, x, input.batch_json_save_path, input.batchToGenerate)
+
+        
+
+        if input.renderProfilePic:
+            print(f"Moving profile picture")
+            move_profile_pic(animations_folder_hunk_path=animationPath, profile_pic_folder_path=profilePicFolder, file_name=file_name)
 
         x += 1
 
