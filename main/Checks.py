@@ -132,8 +132,8 @@ def check_Duplicates(DNAListFormatted):
 
 def check_FailedBatches(batch_json_save_path):
     fail_state = False
-    failed_batch = None
-    failed_dna = None
+    failed_batches = []
+    failed_dnas = []
     failed_dna_index = None
 
     if os.path.isdir(batch_json_save_path):
@@ -144,12 +144,14 @@ def check_FailedBatches(batch_json_save_path):
             NFTs_in_Batch = batch["NFTs_in_Batch"]
             if "Generation Save" in batch:
                 dna_generated = batch["Generation Save"][-1]["DNA Generated"]
-                if dna_generated is not None and dna_generated < NFTs_in_Batch:
+                if dna_generated is None or (dna_generated is not None and dna_generated < NFTs_in_Batch):
                     fail_state = True
-                    failed_batch = int(i.removeprefix("Batch").removesuffix(".json"))
-                    failed_dna = dna_generated
+                    failed_batches.append(int(i.removeprefix("Batch").removesuffix(".json")))
+                    if dna_generated == None:
+                        dna_generated = 0
+                    failed_dnas.append(dna_generated)
 
-    return fail_state, failed_batch, failed_dna, failed_dna_index
+    return fail_state, failed_batches, failed_dnas, failed_dna_index
 
 # Raise Errors:
 def raise_Error_numBatches(maxNFTs, nftsPerBatch):

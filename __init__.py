@@ -613,85 +613,112 @@ class resume_failed_batch(bpy.types.Operator):
         _save_path = bpy.path.abspath(bpy.context.scene.input_tool.save_path)
         _Blend_My_NFTs_Output, _batch_json_save_path, _nftBatch_save_path = make_directories(_save_path)
 
-        _batchToGenerate = bpy.context.scene.input_tool.batchToGenerate
 
-        file_name = os.path.join(_batch_json_save_path, "Batch{}.json".format(_batchToGenerate))
-        batchData = json.load(open(file_name))
 
-        _fail_state, _failed_batch, _failed_dna, _failed_dna_index = Checks.check_FailedBatches(_batch_json_save_path)
+        multipleBatches = bpy.context.scene.input_tool.multipleBatches
+        batchesToGenerate = bpy.context.scene.input_tool.batchesToGenerate
+        allBatchesToGenerate = bpy.context.scene.input_tool.allBatchesToGenerate
 
-        render_settings = batchData["Generation Save"][-1]["Render_Settings"]
+        if multipleBatches:
 
-        input = BMNFTData(
-            nftName=render_settings["nftName"],
-            save_path=_save_path,
-            nftsPerBatch=render_settings["nftsPerBatch"],
-            batchToGenerate=render_settings["batchToGenerate"],
-            multipleBatches=render_settings["multipleBatches"],
-            allBatchesToGenerate=render_settings["allBatchesToGenerate"],
-            batchesToGenerate=render_settings["batchesToGenerate"],
-            collectionSize=render_settings["collectionSize"],
+            NFTRecord_save_path = os.path.join(_Blend_My_NFTs_Output, "NFTRecord.json")
+            nft_record = json.load(open(NFTRecord_save_path))
+            numOfBatches = nft_record["Number of batches"]
 
-            renderProfilePic=render_settings["renderProfilePic"],
+            if allBatchesToGenerate:
+                batchesToGenerate = range(1, numOfBatches+1)
+            else:
+                batchesToGenerate = [int(batch_num) for batch_num in batchesToGenerate.strip().split(',')]
 
-            Blend_My_NFTs_Output=_Blend_My_NFTs_Output,
-            batch_json_save_path=_batch_json_save_path,
-            nftBatch_save_path=render_settings["nftBatch_save_path"],
+            print(batchesToGenerate)
+            for batch_num in batchesToGenerate:
+                _batchToGenerate = batch_num
 
-            enableImages=render_settings["enableImages"],
-            imageFileFormat=render_settings["imageFileFormat"],
+                file_name = os.path.join(_batch_json_save_path, "Batch{}.json".format(_batchToGenerate))
+                batchData = json.load(open(file_name))
 
-            enableAnimations=render_settings["enableAnimations"],
-            animationFileFormat=render_settings["animationFileFormat"],
+                _fail_state, _failed_batches, _failed_dnas, _failed_dna_index = Checks.check_FailedBatches(_batch_json_save_path)
 
-            enableModelsBlender=render_settings["enableModelsBlender"],
-            modelFileFormat=render_settings["modelFileFormat"],
+                # print('batch_num=', batch_num, "failed_batch=", _failed_batch)
+                if len(_failed_batches)==0:
+                    input.fail_state = False
+                    input.batchToGenerate = _batchToGenerate
+                    Exporter.render_and_save_batch_NFTs(input)
 
-            enableCustomFields=render_settings["enableCustomFields"],
+                    # # Handling Custom Fields UIList input:
+                    self.report({'INFO'}, f"All NFTs generated for batch {input.batchToGenerate}!")
+                else:
+                    render_settings = batchData["Generation Save"][-1]["Render_Settings"]
+                    
+                    input = BMNFTData(
+                        nftName=render_settings["nftName"],
+                        save_path=_save_path,
+                        nftsPerBatch=render_settings["nftsPerBatch"],
+                        batchToGenerate=render_settings["batchToGenerate"],
+                        multipleBatches=render_settings["multipleBatches"],
+                        allBatchesToGenerate=render_settings["allBatchesToGenerate"],
+                        batchesToGenerate=render_settings["batchesToGenerate"],
+                        collectionSize=render_settings["collectionSize"],
 
-            cardanoMetaDataBool=render_settings["cardanoMetaDataBool"],
-            solanaMetaDataBool=render_settings["solanaMetaDataBool"],
-            erc721MetaData=render_settings["erc721MetaData"],
+                        renderProfilePic=render_settings["renderProfilePic"],
 
-            cardano_description=render_settings["cardano_description"],
-            solana_description=render_settings["solana_description"],
-            erc721_description=render_settings["erc721_description"],
+                        Blend_My_NFTs_Output=_Blend_My_NFTs_Output,
+                        batch_json_save_path=_batch_json_save_path,
+                        nftBatch_save_path=render_settings["nftBatch_save_path"],
 
-            enableMaterials=render_settings["enableMaterials"],
-            materialsFile=render_settings["materialsFile"],
+                        enableImages=render_settings["enableImages"],
+                        imageFileFormat=render_settings["imageFileFormat"],
 
-            enableLogic=render_settings["enableLogic"],
-            enable_Logic_Json=render_settings["enable_Logic_Json"],
-            logicFile=render_settings["logicFile"],
+                        enableAnimations=render_settings["enableAnimations"],
+                        animationFileFormat=render_settings["animationFileFormat"],
 
-            enableRarity=render_settings["enableRarity"],
-            rarityFile=render_settings["rarityFile"],
+                        enableModelsBlender=render_settings["enableModelsBlender"],
+                        modelFileFormat=render_settings["modelFileFormat"],
 
-            enableAutoShutdown=render_settings["enableAutoShutdown"],
+                        enableCustomFields=render_settings["enableCustomFields"],
 
-            specify_timeBool=render_settings["specify_timeBool"],
-            hours=render_settings["hours"],
-            minutes=render_settings["minutes"],
+                        cardanoMetaDataBool=render_settings["cardanoMetaDataBool"],
+                        solanaMetaDataBool=render_settings["solanaMetaDataBool"],
+                        erc721MetaData=render_settings["erc721MetaData"],
 
-            emailNotificationBool=render_settings["emailNotificationBool"],
-            sender_from=render_settings["sender_from"],
-            email_password=render_settings["email_password"],
-            receiver_to=render_settings["receiver_to"],
+                        cardano_description=render_settings["cardano_description"],
+                        solana_description=render_settings["solana_description"],
+                        erc721_description=render_settings["erc721_description"],
 
-            fail_state=_fail_state,
-            failed_batch=_failed_batch,
-            failed_dna=_failed_dna,
-            failed_dna_index=_failed_dna_index,
+                        enableMaterials=render_settings["enableMaterials"],
+                        materialsFile=render_settings["materialsFile"],
 
-            custom_Fields=render_settings["custom_Fields"],
-        )
+                        enableLogic=render_settings["enableLogic"],
+                        enable_Logic_Json=render_settings["enable_Logic_Json"],
+                        logicFile=render_settings["logicFile"],
 
-        Exporter.render_and_save_NFTs(input)
+                        enableRarity=render_settings["enableRarity"],
+                        rarityFile=render_settings["rarityFile"],
 
-        self.report({'INFO'}, f"Resuming Failed Batch Generation!")
+                        enableAutoShutdown=render_settings["enableAutoShutdown"],
 
-        return {"FINISHED"}
+                        specify_timeBool=render_settings["specify_timeBool"],
+                        hours=render_settings["hours"],
+                        minutes=render_settings["minutes"],
 
+                        emailNotificationBool=render_settings["emailNotificationBool"],
+                        sender_from=render_settings["sender_from"],
+                        email_password=render_settings["email_password"],
+                        receiver_to=render_settings["receiver_to"],
+
+                        fail_state=_fail_state,
+                        failed_batch=_failed_batches,
+                        failed_dna=_failed_dnas,
+                        failed_dna_index=_failed_dna_index,
+
+                        custom_Fields=render_settings["custom_Fields"],
+                    )
+
+                    Exporter.render_and_save_batch_NFTs(input)
+
+                    self.report({'INFO'}, f"Resuming Failed Batch Generation!")
+            return {"FINISHED"}
+            
 
 class refactor_Batches(bpy.types.Operator):
     """Refactor your collection? This action cannot be undone."""

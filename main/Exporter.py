@@ -49,7 +49,13 @@ def save_generation_state(input):
             "save_path": input.save_path,
             "nftsPerBatch": input.nftsPerBatch,
             "batchToGenerate": input.batchToGenerate,
+            "multipleBatches": input.multipleBatches,
+            "allBatchesToGenerate": input.allBatchesToGenerate,
+            "batchesToGenerate": input.batchesToGenerate,
+
             "collectionSize": input.collectionSize,
+
+            "renderProfilePic": input.renderProfilePic,
 
             "Blend_My_NFTs_Output": input.Blend_My_NFTs_Output,
             "batch_json_save_path": input.batch_json_save_path,
@@ -82,6 +88,7 @@ def save_generation_state(input):
             "logicFile": input.logicFile,
 
             "enableRarity": input.enableRarity,
+            "rarityFile":input.rarityFile,
 
             "enableAutoShutdown": input.enableAutoShutdown,
 
@@ -177,11 +184,15 @@ def render_and_save_batch_NFTs(input):
 
     # If failed Batch is detected and user is resuming its generation:
     if input.fail_state:
-        print(f"{bcolors.ERROR}\nResuming Failed Batch {input.failed_batch}\n{bcolors.RESET}")
-        NFTs_in_Batch, hierarchy, BatchDNAList = getBatchData(input.failed_batch, input.batch_json_save_path)
-        for a in range(input.failed_dna):
-            del BatchDNAList[0]
-        x = input.failed_dna + 1
+        if input.batchToGenerate in input.failed_batch:
+            print(f"{bcolors.ERROR}\nResuming Failed Batch {input.batchToGenerate}\n{bcolors.RESET}")
+            NFTs_in_Batch, hierarchy, BatchDNAList = getBatchData(input.batchToGenerate, input.batch_json_save_path)
+            for a in range(input.failed_dna[input.failed_batch.index(input.batchToGenerate)]):
+                del BatchDNAList[0]
+            x = input.failed_dna[input.failed_batch.index(input.batchToGenerate)] + 1
+        else:
+            print("input.failed_batch != input.batchToGenerate")
+            return 
 
     # If user is generating the normal way:
     else:
