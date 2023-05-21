@@ -356,6 +356,12 @@ def render_and_save_batch_NFTs(input):
         print(f"\n{bcolors.OK}|--- Generating NFT {x}/{NFTs_in_Batch}: {name} ---|{bcolors.RESET}")
         print(f"DNA attribute list:\n{dnaDictionary}\nDNA Code:{single_dna}")
 
+        # Increase sampling for metalic variants
+        if dnaDictionary["Body"]=="Metal_5_20" or dnaDictionary["Additional"]=="Flag_26_10" or dnaDictionary["Bottom"]=="Competition_2_10":
+            bpy.context.scene.eevee.taa_render_samples = 170
+        else:
+            bpy.context.scene.eevee.taa_render_samples = 120
+
         for c in dnaDictionary:
             collection = dnaDictionary[c]
             if collection != '0':
