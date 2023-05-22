@@ -100,3 +100,8 @@ def check_render_settings(input, reverse_order=False):
                     input.custom_Fields[item.field_name] = item.field_value
 
     Exporter.check_render_settings(input)
+
+def set_DNA(input, reset=False, reverse_order=False):
+
+
+    Exporter.set_DNA(input, reset)

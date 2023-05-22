@@ -126,6 +126,9 @@ class BMNFTData:
     allBatchesToGenerate: bool
     collectionSize: int
 
+    # dna to set variants in blender
+    dnaToSet: str
+
     # adds +1 frame to render
     renderProfilePic: bool
 
@@ -198,6 +201,8 @@ def getBMNFTData():
         collectionSize=bpy.context.scene.input_tool.collectionSize,
 
         renderProfilePic=bpy.context.scene.input_tool.renderProfilePic,
+
+        dnaToSet=bpy.context.scene.input_tool.dnaToSet,
 
         enableRarity=bpy.context.scene.input_tool.enableRarity,
         rarityFile=bpy.path.abspath(bpy.context.scene.input_tool.rarityFile),
@@ -300,6 +305,7 @@ def runAsHeadless():
             f"multipleBatches={(settings.multipleBatches)}\n"
             f"allBatchesToGenerate={(settings.allBatchesToGenerate)}\n"
             f"renderProfilePic={(settings.renderProfilePic)}\n"
+            f"dnaToSet={settings.dnaToSet}\n"
             f"cardanoMetaDataBool={str(settings.cardanoMetaDataBool)}\n"
             f"cardano_description={settings.cardano_description}\n"
             f"erc721MetaData={str(settings.erc721MetaData)}\n"
@@ -356,6 +362,7 @@ def runAsHeadless():
         settings.batchesToGenerate = pairs[27][1]
         settings.allBatchesToGenerate = pairs[28][1] == 'True'
         settings.renderProfilePic = pairs[29][1]
+        settings.dnaToSet = pairs[30][1]
 
     if args.save_path:
         settings.save_path = args.save_path
@@ -480,6 +487,8 @@ class BMNFTS_PGT_Input_Properties(bpy.types.PropertyGroup):
                                            min=1)
 
     batchesToGenerate: bpy.props.StringProperty(name="Batches To Generate")
+
+    dnaToSet: bpy.props.StringProperty(name="Dna to set")
 
     # Refactor Batches & Create Metadata Panel:
     cardanoMetaDataBool: bpy.props.BoolProperty(name="Cardano Cip")
@@ -662,6 +671,8 @@ class resume_failed_batch(bpy.types.Operator):
 
                         renderProfilePic=render_settings["renderProfilePic"],
 
+                        dnaToSet=render_settings["dnaToSet"],
+
                         Blend_My_NFTs_Output=_Blend_My_NFTs_Output,
                         batch_json_save_path=_batch_json_save_path,
                         nftBatch_save_path=render_settings["nftBatch_save_path"],
@@ -738,7 +749,50 @@ class refactor_Batches(bpy.types.Operator):
 
     def invoke(self, context, event):
         return context.window_manager.invoke_confirm(self, event)
+    
+class setDNA(bpy.types.Operator):
+    bl_idname = 'set.dna'
+    bl_label = 'Set DNA'
+    bl_description = 'Set DNA in Blender scene'
+    bl_options = {"REGISTER", "UNDO"}
 
+    reverse_order: BoolProperty(
+        default=False,
+        name="Reverse Order")
+
+    def execute(self, context):
+        # Handling Custom Fields UIList input:
+        input = getBMNFTData()
+
+        Intermediate.set_DNA(input, reset=False)
+
+        self.report({'INFO'}, f"DNA set!")
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_confirm(self, event)
+
+class resetDNA(bpy.types.Operator):
+    bl_idname = 'reset.dna'
+    bl_label = 'Reset Blender scene to default settings'
+    bl_description = 'Reset Blender scene to default settings'
+    bl_options = {"REGISTER", "UNDO"}
+
+    reverse_order: BoolProperty(
+        default=False,
+        name="Reverse Order")
+
+    def execute(self, context):
+        # Handling Custom Fields UIList input:
+        input = getBMNFTData()
+
+        Intermediate.set_DNA(input, reset=True)
+
+        self.report({'INFO'}, f"Blender scene reset!")
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_confirm(self, event)
 
 class export_settings(bpy.types.Operator):
     """Export your settings into a configuration file."""
@@ -1059,6 +1113,27 @@ class BMNFTS_PT_Refactor(bpy.types.Panel):
         row = layout.row()
         self.layout.operator("refactor.batches", icon='FOLDER_REDIRECT', text="Refactor Batches")
 
+class BMNFTS_PT_SetDNA(bpy.types.Panel):
+    bl_label = "Set DNA in Blender scene"
+    bl_idname = "BMNFTS_PT_SetDNA"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = 'Blend_My_NFTs'
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        input_tool_scene = scene.input_tool
+
+        row = layout.row()
+        layout.label(text="Type DNA of NFT that you want to set")
+
+        row = layout.row()
+        row.prop(input_tool_scene, "dnaToSet")
+        row = layout.row()
+        self.layout.operator("set.dna", icon='RENDER_RESULT', text="Set DNA")
+        row = layout.row()
+        self.layout.operator("reset.dna", icon='RENDER_RESULT', text="Reset DNA")
 
 class BMNFTS_PT_Other(bpy.types.Panel):
     bl_label = "Other"
@@ -1168,12 +1243,15 @@ classes = (
               exportNFTs,
               resume_failed_batch,
               refactor_Batches,
+              setDNA,
+              resetDNA,
               export_settings,
 
               # Panel Classes:
               BMNFTS_PT_CreateData,
               BMNFTS_PT_GenerateNFTs,
               BMNFTS_PT_Refactor,
+              BMNFTS_PT_SetDNA,
               BMNFTS_PT_Other,
           ) + Custom_Metadata_UIList.classes_Custom_Metadata_UIList + Logic_UIList.classes_Logic_UIList
 
