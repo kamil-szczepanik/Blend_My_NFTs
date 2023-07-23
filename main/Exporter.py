@@ -735,6 +735,7 @@ def check_batch_render_settings(input):
     for a in BatchDNAList:
         full_single_dna = list(a.keys())[0]
         Order_Num = a[full_single_dna]['Order_Num']
+        # print("Checking HUNK:", Order_Num)
 
         # Material handling:
         if input.enableMaterials:
@@ -839,7 +840,14 @@ def check_batch_render_settings(input):
                             # print(obj_list)
                             for  obj in obj_list:
                                 selected_object = bpy.data.objects.get(obj)
-                                selected_object.active_material = bpy.data.materials[materialdnaDictionary[var_mat][index]]
+                                try:
+                                    selected_object.active_material = bpy.data.materials[materialdnaDictionary[var_mat][index]]
+                                except IndexError:
+                                    print(f"HUNK: {Order_Num}")
+                                    raise IndexError(f"HUNK: {Order_Num}, {var_mat}, {index}")
+                                # except Exception as e:
+                                #     e.add_note(f"HUNK: {Order_Num}")
+                                #     raise
 
         # Turn off render camera and viewport camera for all collections in hierarchy
         for i in hierarchy:
